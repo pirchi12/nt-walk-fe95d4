@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>El paseo de Maryluz · Neve Tzedek y HaTachana</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --ink:#2b2620; --paper:#f6f1e7; --card:#fffdf8; --line:#e3d9c6;
+    --accent:#b5642f; --accent2:#3b6b5e; --muted:#8a7f6d; --gold:#caa24b; --green:#3b6b5e;
+    --shadow:0 6px 24px rgba(60,45,25,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--paper);color:var(--ink);line-height:1.5}
+  h1,h2,h3{font-family:"Georgia","Times New Roman",serif;font-weight:600;margin:0}
+  header.hero{background:linear-gradient(135deg,#3b6b5e 0%,#2b4d44 60%,#243f38 100%);
+    color:#f6f1e7;padding:28px 22px 22px;position:relative}
+  header.hero .kick{letter-spacing:.22em;text-transform:uppercase;font-size:11px;opacity:.8}
+  header.hero h1{font-size:30px;margin:6px 0 4px;color:#fff}
+  header.hero p{margin:0;opacity:.92;font-size:14px;max-width:680px}
+  header.hero .meta{margin-top:10px;font-size:12px;opacity:.8}
+  .topbtn{position:absolute;top:20px;right:18px;display:flex;gap:8px}
+  .tabs{display:flex;gap:6px;background:#243f38;padding:0 14px}
+  .tabs button{appearance:none;border:0;background:transparent;color:#cfe3dd;
+     padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent}
+  .tabs button.active{color:#fff;border-bottom-color:var(--gold)}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  .note{background:#fff7e8;border:1px solid #ecd9a8;border-radius:10px;padding:10px 14px;
+        font-size:13px;color:#6b5a2e;margin:14px auto;max-width:1100px}
+  h2.sec{font-size:20px;margin:22px 0 4px}
+  .sub{font-size:13px;color:var(--muted);margin:0 0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+  .stop{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+        box-shadow:var(--shadow);cursor:pointer;transition:.15s;display:flex;flex-direction:column}
+  .stop:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(60,45,25,.16)}
+  .stop .hero-img{position:relative;height:150px;background:#ddd center/cover}
+  .stop.sug .hero-img{height:84px;background:linear-gradient(135deg,#5b8c7d,#34564c)}
+  .stop .badge{position:absolute;top:8px;left:8px;background:var(--accent);color:#fff;
+        width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+        font-weight:700;font-family:Georgia,serif;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .stop.sug .badge{background:var(--green);border-radius:6px;width:auto;padding:0 8px;height:22px;font-size:11px;font-family:inherit}
+  .stop .icns{position:absolute;top:8px;right:8px;display:flex;gap:4px}
+  .stop .icns span{background:rgba(0,0,0,.55);color:#fff;border-radius:6px;font-size:11px;padding:2px 6px}
+  .stop .b{padding:10px 12px 12px}
+  .stop h3{font-size:15.5px;line-height:1.25}
+  .stop .area{font-size:11.5px;color:var(--muted);margin-top:3px}
+  /* modal */
+  #modal{position:fixed;inset:0;background:rgba(25,18,10,.55);backdrop-filter:blur(2px);
+     display:none;align-items:flex-start;justify-content:center;z-index:5000;padding:24px;overflow:auto}
+  .sheet{background:var(--paper);max-width:680px;width:100%;border-radius:16px;overflow:hidden;
+     box-shadow:0 20px 60px rgba(0,0,0,.4);margin:auto}
+  .sheet .top{position:relative;background:#243f38;color:#fff;padding:16px 48px 14px 18px}
+  .sheet .top .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+  .sheet .top h2{font-size:22px;color:#fff;margin:3px 0 2px;font-family:Georgia,serif}
+  .sheet .top .area{font-size:12.5px;opacity:.85}
+  .sheet .x{position:absolute;top:12px;right:14px;font-size:26px;color:#fff;cursor:pointer;line-height:1;opacity:.85}
+  .sheet .body{padding:16px 18px 20px;display:flex;flex-direction:column;gap:14px}
+  .media video,.media>img{width:100%;border-radius:12px;display:block;background:#000}
+  .ba{position:relative}
+  .ba img{width:100%;border-radius:12px;display:block}
+  .ba .lab{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:3px 8px;border-radius:6px}
+  .ba .swap{position:absolute;bottom:8px;right:8px}
+  .blk h4{margin:0 0 5px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-family:inherit;font-weight:700}
+  .quote{font-size:15px;background:#fff;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:9px 12px;color:#3a3228}
+  .auto{font-size:11px;color:#b08a3a;margin-top:4px}
+  .hist{font-size:14px}
+  .src{font-size:11px;margin-top:5px}
+  .verified{color:var(--accent2)} .draft{color:#b08a3a}
+  .links{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{appearance:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;
+       font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.15s;
+       color:var(--ink);text-decoration:none}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.ghost{background:transparent;border-color:rgba(255,255,255,.5);color:#fff}
+  .btn.ghost:hover{background:rgba(255,255,255,.15);color:#fff}
+  .btn.rec{border-color:#c44;color:#c44}
+  .btn.rec.recording{background:#c44;color:#fff;animation:pulse 1.1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .memos{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+  .memo{display:flex;align-items:center;gap:8px;background:#f0ebde;border-radius:10px;padding:6px 8px}
+  .memo audio{height:32px;flex:1}
+  .memo .ts{font-size:11px;color:var(--muted);min-width:120px}
+  .memo .del{cursor:pointer;color:#b55;font-size:15px;border:0;background:none}
+  .why{font-size:14px;background:#eef4f1;border-radius:10px;padding:10px 12px}
+  #map{height:74vh;border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .leaflet-div-icon-num{color:#fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+     width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+     border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+  .pin-v{background:var(--accent)} .pin-s{background:var(--green)}
+  .leaflet-div-icon-num span{transform:rotate(45deg);font-weight:700;font-family:Georgia,serif;font-size:13px}
+  .pop b{font-family:Georgia,serif} .pop{min-width:150px}
+  .pop .pbtn{margin-top:6px;display:inline-block}
+  .hidden{display:none}
+  footer{padding:24px;text-align:center;color:var(--muted);font-size:12px}
+  #lb{position:fixed;inset:0;background:rgba(20,15,10,.92);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
+  #lb img{max-width:92vw;max-height:90vh;border-radius:10px}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="topbtn">
+    <button class="btn ghost" onclick="downloadPlan()">⬇ Exportar plan</button>
+  </div>
+  <div class="kick">Un paseo de Maryluz · 25 de mayo de 2026</div>
+  <h1>Neve Tzedek y HaTachana</h1>
+  <p>Un paseo al atardecer por el barrio más antiguo de Tel Aviv, contado con la propia voz de Maryluz. Son sus notas de campo: navega, anota qué investigar y le habla a su mamá. Toca un lugar para escucharla, ver la historia, comparar «antes y ahora», investigar y grabar tu propia nota.</p>
+  <div class="meta" id="meta"></div>
+</header>
+
+<div class="tabs">
+  <button id="tab-places" class="active" onclick="showTab('places')">📍 Lugares</button>
+  <button id="tab-map" onclick="showTab('map')">🗺 Mapa de la ruta</button>
+</div>
+
+<div class="note">
+  <b>Maqueta para comentar.</b> Los datos históricos están verificados con fuentes (botón <b>fuente</b> en cada lugar); los puntos del mapa usan coordenadas reales de OpenStreetMap (algunos, marcados, son aproximados por dirección). 🎙 <b>Para grabar, abre con servidor local:</b> <code>python3 -m http.server 8000</code> → <code>http://localhost:8000/tour.html</code>. Cada grabación se suma al plan: usa <b>⬇ Exportar plan</b>.
+</div>
+
+<div id="view-places" class="wrap">
+  <h2 class="sec">📍 Lo que Maryluz recorrió</h2>
+  <p class="sub" id="sub-visited"></p>
+  <div class="grid" id="grid-visited"></div>
+
+  <h2 class="sec">✨ Lugares sugeridos para completar una hora o más</h2>
+  <p class="sub">Ideas de la investigación para alargar el paseo. Tócalas para ver por qué vale la pena y cómo llegar.</p>
+  <div class="grid" id="grid-sug"></div>
+</div>
+
+<div id="view-map" class="wrap hidden"><div id="map"></div></div>
+
+<div id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet"><div id="sheet-content"></div></div>
+</div>
+<div id="lb" onclick="this.style.display='none'"></div>
+
+<footer>Maqueta v2 · medios desde <code>extracted/</code> · notas de voz guardadas en este navegador · historia con fuentes citadas</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const M="extracted/", AR="extracted/archival/", FR="extracted/frames/";
+// ===== LUGARES VISITADOS =====
+const STOPS=[
+ {id:1,n:1,title:"La Villa — Casa Wieland",area:"Recinto HaTachana",coords:[32.06070,34.76240],verified:true,
+  photos:["00000004-PHOTO-2026-05-25-08-44-03.jpg","00000003-PHOTO-2026-05-25-08-44-03.jpg"],video:null,archival:"villa-1902.jpg",archYear:"hacia 1900",es:"",
+  hist:"La familia alemana Wieland llegó a Jerusalén en 1870 y hacia 1900 se instaló junto a la estación de tren de Jaffa, al lado del barrio templario «Valhalla». Su casa, «La Villa», se construyó en 1902 en estilo templario.",
+  src:"De la placa histórica en la foto de Maryluz.",
+  links:[{l:"Templarios en T.A. (Wiki)",u:"https://en.wikipedia.org/wiki/German_Colony,_Tel_Aviv"}]},
+
+ {id:2,n:2,title:"La Fábrica y Tienda Wieland",area:"Recinto HaTachana",coords:[32.06045,34.76215],verified:true,
+  photos:["00000007-PHOTO-2026-05-25-08-44-04.jpg","00000005-PHOTO-2026-05-25-08-44-03.jpg"],video:null,archival:"factory-1905.jpg",archYear:"1905",es:"",
+  hist:"La Fábrica Wieland se construyó en 1905 junto a la estación de tren y fue pionera de la industria del cemento en la Tierra de Israel, sobre todo de baldosas decorativas. La familia abrió una tienda de fábrica en 1924 para exhibir sus productos.",
+  src:"De las dos placas en las fotos de Maryluz.",links:[]},
+
+ {id:3,n:3,title:"Callejones de HaTachana — SOHO y GAYA",area:"Recinto HaTachana (est. 1892)",coords:[32.05884,34.76174],verified:true,
+  photos:["00000006-PHOTO-2026-05-25-08-44-03.jpg","00000008-PHOTO-2026-05-25-08-44-04.jpg"],video:"00000019-VIDEO-2026-05-25-08-44-06.mp4",archival:null,
+  es:"Yo puedo llegar hasta este punto, a este cafecito de acá. Llego hasta acá. Adelante, a unos metros, está el Gésher. Pero podría entrarme por este callejoncito a subir al Gésher. Tal vez por aquí, si me meto, ya entraría en Neve Tzedek y puedo ir al puente.",
+  hist:"HaTachana («La Estación») es la antigua terminal del ferrocarril Jaffa–Jerusalén (1892), reabierta en 2010 como recinto peatonal de tiendas, galerías y cafés. En el video, el «Gésher» que busca Maryluz es el Puente Chelouche (ver lugar sugerido), que sube hacia Neve Tzedek.",
+  src:"HaTachana: conocimiento general. «Gésher» = Puente Chelouche, identificado por investigación.",
+  links:[{l:"HaTachana (Wiki)",u:"https://en.wikipedia.org/wiki/HaTachana,_Tel_Aviv"}]},
+
+ {id:4,n:4,title:"Panel de la Colonia Americana",area:"entre HaTachana y Florentin",coords:[32.0588,34.7642],verified:false,
+  photos:["00000009-PHOTO-2026-05-25-08-44-04.jpg"],video:null,archival:null,es:"",
+  hist:"Un panel sobre la zona de la Colonia Americana / Mercado Levinski y el parque Humeilla — incluye una iglesia trasladada aquí desde Jaffa.",
+  src:"Leído del cartel — detalles por verificar.",links:[]},
+
+ {id:5,n:5,title:"Centro Suzanne Dellal (poste indicador)",area:"Neve Tzedek",coords:[32.06076,34.76425],verified:true,
+  photos:["00000010-PHOTO-2026-05-25-08-44-04.jpg"],video:null,archival:null,es:"",
+  hist:"Un poste indicador en el corazón de Neve Tzedek señala tres hitos: el Centro Suzanne Dellal (danza y cultura, con su famoso patio de naranjos), la calle Hayyim Amzalag y el Museo de Arte Nahum Gutman.",
+  src:"Del cartel en la foto; coordenadas del Centro Suzanne Dellal (OpenStreetMap).",
+  links:[{l:"Centro Suzanne Dellal",u:"https://www.suzannedellal.org.il/en/"}]},
+
+ {id:6,n:6,title:"Calle Hayyim Amzalag",area:"Neve Tzedek",coords:[32.0625,34.7656],verified:false,
+  photos:["00000011-PHOTO-2026-05-25-08-44-05.jpg"],video:null,archival:null,es:"",
+  hist:"Una callejuela clásica de Neve Tzedek con casas restauradas de 1880–1900 y persianas de lamas. Lleva el nombre de Haim Amzalak, notable de Jaffa y vicecónsul británico del siglo XIX.",
+  src:"Nombre del cartel; biografía por verificar.",links:[]},
+
+ {id:7,n:7,title:"Museo Nahum Gutman / Casa de los Escritores",area:"Neve Tzedek · Shimon Rokach 21–22",coords:[32.06310,34.76590],verified:true,
+  photos:[],video:"00000020-VIDEO-2026-05-25-08-44-07.mp4",archival:null,
+  es:"Este es el Museo Gutman y aquí dice que en esta casa vivieron Yosef Haim Brenner y otros escritores y editores —Yosef Aharonovich y Devorah Barón— 1907–1914. Estoy en Shimon Rokach 22.",
+  hist:"El Museo de Arte Nahum Gutman ocupa un edificio histórico de Neve Tzedek en la calle Shimon Rokach, la «Casa de los Escritores», donde vivieron Yosef Haim Brenner, Yosef Aharonovich y Devorah Barón (1907–1914). Maryluz lo identifica en su video.",
+  src:"De la narración de Maryluz y la placa del edificio.",
+  links:[{l:"Museo Gutman",u:"https://www.gutmanmuseum.co.il/en/"},{l:"Nahum Gutman (Wiki)",u:"https://es.wikipedia.org/wiki/Najum_Gutman"}]},
+
+ {id:8,n:8,title:"Patrimonio judío de Mashad",area:"Neve Tzedek (exposición)",coords:[32.06080,34.76550],verified:false,
+  photos:["00000012-PHOTO-2026-05-25-08-44-05.jpg","00000013-PHOTO-2026-05-25-08-44-05.jpg"],video:null,archival:null,es:"",
+  hist:"Paneles sobre los Anusei Mashad —la comunidad criptojudía de Mashad (Irán), obligada en 1839 a convertirse al islam mientras conservaba el judaísmo en secreto— y la «Casa de las Madres» (Beit Imahot), hogar para ancianas mashadíes fundado en 1950 por un comité de mujeres en la esquina de Shimon Rokach y Shlush, vendido en 1992.",
+  src:"De los paneles en las fotos; historia de Beit Imahot verificada. El recinto exacto que aloja los paneles está por confirmar.",
+  links:[{l:"Judíos de Mashad (Wiki)",u:"https://en.wikipedia.org/wiki/Mashhadi_Jews"}]},
+
+ {id:9,n:9,title:"Casa de Akiva Aryeh Weiss",area:"Calle Herzl 2",coords:[32.06230,34.76930],verified:true,
+  photos:["00000014-PHOTO-2026-05-25-08-44-05.jpg"],video:null,archival:null,es:"",
+  hist:"La Casa de Akiva Aryeh Weiss, en la calle Herzl 2, fue construida en 1909 por Weiss —principal fundador de Tel Aviv y organizador del sorteo de parcelas de 1909—. Restaurada entre 1996 y 2011 y convertida en restaurante y oficinas, con una torre moderna erigida detrás del edificio histórico.",
+  src:"Identificada por investigación (coincide con la inscripción «WEISS» y la torre). Coordenadas aproximadas por dirección.",
+  links:[{l:"Akiva Aryeh Weiss (Wiki)",u:"https://en.wikipedia.org/wiki/Akiva_Aryeh_Weiss"}]},
+
+ {id:10,n:10,title:"Las Casas Gemelas",area:"Neve Tzedek · calle Pines 28/32",coords:[32.06150,34.76600],verified:true,
+  photos:[],video:"00000021-VIDEO-2026-05-25-08-44-07.mp4",archival:null,
+  es:"Si salgo del Museo Gutman... A la izquierda están las casas gemelas. Mamá, aquí están las dos casas gemelas.",
+  hist:"Las «Casas Gemelas» de Neve Tzedek son dos casas casi idénticas que Aharon Chelouche construyó para sus dos nietas, una frente a la otra, en la calle Pines 28 y 32, cerca del Museo Gutman.",
+  src:"Identificadas por Maryluz; historia por investigación. Coordenadas aproximadas por dirección.",links:[]},
+
+ {id:11,n:11,title:"Edificio con murales (¿Teatro Edén?)",area:"Neve Tzedek / borde de Florentin",coords:[32.06000,34.76860],verified:false,
+  photos:[],video:"00000022-VIDEO-2026-05-25-08-44-07.mp4",archival:null,
+  es:"Este es un restaurante de teatro; Teatro Edén se llama. A averiguar sobre el Teatro Edén.",
+  hist:"Maryluz lo nombra «Teatro Edén» y se deja la nota «a averiguar». OJO: el histórico Cine Edén (primer cine de Tel Aviv, 1914) está en Lilienblum/Pines y hoy está abandonado, así que el edificio del mural (corazón azul «EVERY BODY NEEDS A HUG») es probablemente otro lugar —un local moderno o arte callejero de Florentin—. Por confirmar con la memoria de Maryluz.",
+  src:"⚠ Sin confirmar: el edificio del mural ≠ el Cine Edén histórico. Maryluz debe confirmar la dirección exacta.",
+  links:[{l:"Cine Edén histórico (Wiki)",u:"https://en.wikipedia.org/wiki/Eden_Cinema"}]},
+
+ {id:12,n:12,title:"Estatua ecuestre de Meir Dizengoff",area:"frente a la Casa de la Independencia",coords:[32.06390,34.77020],verified:true,
+  photos:["00000015-PHOTO-2026-05-25-08-44-05.jpg"],video:null,archival:null,es:"",
+  hist:"Estatua de bronce de Meir Dizengoff (1861–1936), primer alcalde de Tel Aviv, montado en la yegua que cabalgaba por la joven ciudad. Obra del escultor David Zundelovich (2009), frente a la Casa de la Independencia, bulevar Rothschild 16.",
+  src:"Identificada por investigación (escultor y año confirmados).",
+  links:[{l:"Meir Dizengoff (Wiki)",u:"https://es.wikipedia.org/wiki/Meir_Dizengoff"}]},
+
+ {id:13,n:13,title:"Sala de la Independencia (Beit Ha'atzmaut)",area:"Bulevar Rothschild 16",coords:[32.06283,34.77092],verified:true,
+  photos:["00000016-PHOTO-2026-05-25-08-44-06.jpg"],video:null,archival:null,es:"",
+  hist:"Originalmente la casa de Meir Dizengoff, en el Bulevar Rothschild 16; aquí David Ben-Gurión declaró la creación del Estado de Israel el 14 de mayo de 1948. Hoy es el museo de la Independencia.",
+  src:"Del panel en la foto e historia conocida; coordenadas (OpenStreetMap).",
+  links:[{l:"Sala de la Independencia (Wiki)",u:"https://en.wikipedia.org/wiki/Independence_Hall_(Israel)"}]},
+
+ {id:14,n:14,title:"Muro de los fundadores «Zecher Olam»",area:"Tel Aviv (interior)",coords:[32.0642,34.7694],verified:false,
+  photos:["00000017-PHOTO-2026-05-25-08-44-06.jpg"],video:null,archival:null,es:"",
+  hist:"Un muro de mármol «Zecher Olam» (Memoria Eterna), fechado 1909–1949, con decenas de familias fundadoras homenajeadas por construir los primeros barrios.",
+  src:"Leído de la placa; lugar exacto por confirmar.",links:[]},
+
+ {id:15,n:15,title:"Monumento a los Fundadores",area:"Plaza de los Fundadores · Rothschild",coords:[32.06310,34.77190],verified:true,
+  photos:["00000018-PHOTO-2026-05-25-08-44-06.jpg"],video:null,archival:null,es:"",
+  hist:"El Monumento a los Fundadores (אנדרטת המייסדים), del escultor Aharon Priver, inaugurado en 1951, es un relieve de bronce de tres niveles —dunas, las primeras casas y la ciudad de los años 40— con el versículo de Jeremías 31:4 «Aún te edificaré y serás reedificada, virgen de Israel», origen del emblema de Tel Aviv.",
+  src:"Identificado por investigación (escultor y año confirmados).",
+  links:[{l:"Monumento a los Fundadores (Wiki)",u:"https://he.wikipedia.org/wiki/%D7%90%D7%A0%D7%93%D7%A8%D7%98%D7%AA_%D7%94%D7%9E%D7%99%D7%99%D7%A1%D7%93%D7%99%D7%9D"}]},
+
+ {id:16,n:16,title:"Fuente de mosaico de Nahum Gutman",area:"Bulevar Rothschild 3",coords:[32.06250,34.77160],verified:true,
+  photos:[],video:"00000023-VIDEO-2026-05-25-08-44-07.mp4",archival:null,
+  es:"Ok, la fuente queda en Rothschild 3. ¡Ay, a estudiar!",
+  hist:"La Fuente de Mosaico de Nahum Gutman, en el bulevar Rothschild 3, fue encargada para el 50.º aniversario de Tel Aviv; su mosaico de vidrio se completó en 1979 y se trasladó aquí en 2012. Representa escenas de la historia de Jaffa y Tel Aviv, con versículos de Jeremías 31:4, 2 Crónicas 2:16 y Jonás 1:3.",
+  src:"Identificada por investigación. Comparte el versículo de Jeremías con el Monumento a los Fundadores, pero es una obra distinta.",links:[]},
+];
+// ===== LUGARES SUGERIDOS =====
+const SUG=[
+ {id:"s1",title:"Puente Chelouche (Gésher Shloush)",area:"borde de Neve Tzedek · 1892",coords:[32.05982,34.76577],
+  why:"Es el «Gésher» que Maryluz busca en su video. Puente de piedra de 1892 sobre la antigua vía férrea, ordenado por el gobernador otomano tras el accidente del carruaje de Aharon Chelouche; una de las estructuras más antiguas de la zona, anterior a Tel Aviv (1909).",
+  links:[{l:"Puente Chelouche",u:"https://en.wikipedia.org/wiki/Neve_Tzedek"}]},
+ {id:"s2",title:"Calle Shabazi",area:"arteria de Neve Tzedek",coords:[32.06270,34.76480],
+  why:"La calle principal del barrio: boutiques, galerías, cafés y casas restauradas. Ideal para caminar entre lugar y lugar.",links:[]},
+ {id:"s3",title:"Casa Rokach (Beit Rokach)",area:"Neve Tzedek · 1887",coords:[32.06350,34.76500],
+  why:"Una de las primeras casas del barrio (1887), de Shimon Rokach; hoy museo y galería. A pasos del Museo Gutman.",links:[]},
+ {id:"s4",title:"Cine Edén histórico",area:"Lilienblum / Pines",coords:[32.06170,34.76720],
+  why:"El primer cine de Tel Aviv (1914), hoy abandonado. Vale verlo para distinguirlo del edificio con murales que Maryluz filmó.",
+  links:[{l:"Cine Edén (Wiki)",u:"https://en.wikipedia.org/wiki/Eden_Cinema"}]},
+ {id:"s5",title:"Arte callejero de Florentin",area:"Florentin",coords:[32.05700,34.77000],
+  why:"El barrio del grafiti y los murales (como el corazón «EVERY BODY NEEDS A HUG»). Buen cierre creativo del paseo.",links:[]},
+ {id:"s6",title:"Bulevar Rothschild (Bauhaus)",area:"Ciudad Blanca · UNESCO",coords:[32.06450,34.77250],
+  why:"El bulevar arbolado con la mayor concentración de arquitectura Bauhaus del mundo (Patrimonio de la Humanidad). Conecta la estatua, la Independencia y las fuentes.",
+  links:[{l:"Ciudad Blanca (Wiki)",u:"https://es.wikipedia.org/wiki/Ciudad_Blanca_(Tel_Aviv)"}]},
+ {id:"s7",title:"Plaza Bialik",area:"centro histórico",coords:[32.06680,34.77050],
+  why:"Plaza histórica con el antiguo Ayuntamiento (Museo de la Historia de Tel Aviv), la Casa Bialik y la Casa Rubin. Donde estuvo originalmente la fuente de Gutman.",links:[]},
+];
+
+const ALL={}; STOPS.forEach(s=>ALL[s.id]=s); SUG.forEach(s=>{s.sug=true;ALL[s.id]=s;});
+document.getElementById('meta').textContent=`${STOPS.length} lugares visitados · ${SUG.length} sugeridos · 16 fotos · 5 audios de Maryluz`;
+document.getElementById('sub-visited').textContent=`${STOPS.length} paradas, en el orden en que las grabó. Toca cualquiera para abrirla.`;
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function thumb(s){ if(s.archival) return AR+s.archival; if(s.photos&&s.photos[0]) return M+s.photos[0]; if(s.video) return FR+s.video.replace('.mp4','.jpg'); return null; }
+
+// ----- tarjetas -----
+function card(s){
+  const t=thumb(s);
+  const icns=[]; if(s.video)icns.push('🎙 voz'); if(s.archival)icns.push('🕰 antes');
+  const el=document.createElement('div'); el.className='stop'+(s.sug?' sug':''); el.onclick=()=>openModal(s.id);
+  el.innerHTML=`
+    <div class="hero-img" style="${t?`background-image:url('${t}')`:''}">
+      <div class="badge">${s.sug?'Sugerido':s.n}</div>
+      ${icns.length?`<div class="icns">${icns.map(i=>`<span>${i}</span>`).join('')}</div>`:''}
+    </div>
+    <div class="b"><h3>${s.title}</h3><div class="area">${s.area}</div></div>`;
+  return el;
+}
+STOPS.forEach(s=>document.getElementById('grid-visited').appendChild(card(s)));
+SUG.forEach(s=>document.getElementById('grid-sug').appendChild(card(s)));
+
+// ----- modal -----
+const modal=document.getElementById('modal'), sc=document.getElementById('sheet-content');
+function mapsLink(s){return `https://www.google.com/maps/search/?api=1&query=${s.coords[0]},${s.coords[1]}`;}
+function searchLink(s){return `https://www.google.com/search?q=${encodeURIComponent(s.title+' Tel Aviv')}`;}
+
+function openModal(id){
+  const s=ALL[id];
+  let media='';
+  if(s.video){ media=`<div class="media"><video controls preload="metadata" poster="${FR+s.video.replace('.mp4','.jpg')}" src="${M+s.video}"></video></div>`; }
+  else if(s.photos&&s.photos.length){ media=`<div class="media"><img src="${M+s.photos[0]}" onclick="lb('${M+s.photos[0]}')" style="cursor:zoom-in"></div>`; }
+
+  let ba='';
+  if(s.archival){
+    const now=s.photos&&s.photos[0]?M+s.photos[0]:'';
+    ba=`<div class="blk"><h4>🕰 Antes y ahora</h4>
+      <div class="ba"><img id="baimg" src="${AR+s.archival}" data-antes="${AR+s.archival}" data-ahora="${now}">
+      <span class="lab" id="balab">Antes — ${s.archYear||''}</span>
+      ${now?`<button class="btn swap" onclick="swapBA()">⇄ Ver ahora</button>`:''}</div></div>`;
+  }
+
+  const quote = s.es ? `<div class="blk"><h4>🎧 La voz de Maryluz (español)</h4><div class="quote">«${esc(s.es)}»</div><div class="auto">⚠ transcripción automática — por revisar</div></div>` : '';
+  const why = s.why ? `<div class="why">${s.why}</div>` : '';
+  const hist = s.hist ? `<div class="blk"><h4>📖 Historia</h4><div class="hist">${s.hist}</div><div class="src ${s.verified?'verified':'draft'}">${s.verified?'✓ fuente: ':'⚠ borrador: '}${s.src||''}</div></div>` : '';
+
+  const lk=(s.links||[]).map(x=>`<a class="btn" href="${x.u}" target="_blank" rel="noopener">🔗 ${x.l}</a>`).join('');
+  const links=`<div class="blk"><h4>🔎 Investigar</h4><div class="links">
+     <a class="btn" href="${mapsLink(s)}" target="_blank" rel="noopener">📍 Google Maps</a>
+     <a class="btn" href="${searchLink(s)}" target="_blank" rel="noopener">🔎 Buscar</a>${lk}</div></div>`;
+
+  const rec=`<div class="blk"><h4>🎙 Tus notas de voz (se suman al plan)</h4>
+     <div class="memos" id="memos-${s.id}"></div>
+     <button class="btn rec" id="rec-${s.id}" onclick="toggleRec('${s.id}')">● Grabar una nota</button></div>`;
+
+  sc.innerHTML=`<div class="top"><span class="x" onclick="closeModal()">×</span>
+      <div class="tag">${s.sug?'Lugar sugerido':'Parada '+s.n}</div>
+      <h2>${s.title}</h2><div class="area">${s.area}</div></div>
+    <div class="body">${media}${quote}${why}${ba}${hist}${links}${rec}
+      <div class="links"><button class="btn primary" onclick="goToMap('${s.id}')">🗺 Ver en el mapa</button></div>
+    </div>`;
+  modal.style.display='flex'; renderMemos(s.id); document.body.style.overflow='hidden';
+}
+function closeModal(){ modal.style.display='none'; document.body.style.overflow=''; }
+function swapBA(){ const i=document.getElementById('baimg'),l=document.getElementById('balab');
+  const showingAntes=i.src.indexOf(i.dataset.antes)>-1||i.src===i.dataset.antes;
+  if(showingAntes && i.dataset.ahora){ i.src=i.dataset.ahora; l.textContent='Ahora'; }
+  else { i.src=i.dataset.antes; l.textContent='Antes'; } }
+function lb(src){ const e=document.getElementById('lb'); e.innerHTML=`<img src="${src}">`; e.style.display='flex'; }
+
+// ----- grabación -----
+const recorders={}, STORE='maryluz_memos_v2';
+let memos=JSON.parse(localStorage.getItem(STORE)||'{}');
+function persist(){ try{localStorage.setItem(STORE,JSON.stringify(memos));}catch(e){console.warn(e);} }
+function renderMemos(id){ const box=document.getElementById('memos-'+id); if(!box)return; box.innerHTML='';
+  (memos[id]||[]).forEach((m,i)=>{ const r=document.createElement('div'); r.className='memo';
+    r.innerHTML=`<span class="ts">${m.ts}</span><audio controls src="${m.data}"></audio><button class="del" onclick="delMemo('${id}',${i})">🗑</button>`;
+    box.appendChild(r); }); }
+function delMemo(id,i){ memos[id].splice(i,1); persist(); renderMemos(id); }
+async function toggleRec(id){
+  const btn=document.getElementById('rec-'+id);
+  if(recorders[id]){ recorders[id].stop(); return; }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    alert("El micrófono se bloquea en file://. Abre con servidor local:\n  python3 -m http.server 8000\nhttp://localhost:8000/tour.html"); return; }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const mr=new MediaRecorder(stream), chunks=[];
+    mr.ondataavailable=e=>chunks.push(e.data);
+    mr.onstop=()=>{ const b=new Blob(chunks,{type:'audio/webm'}), rd=new FileReader();
+      rd.onloadend=()=>{ (memos[id]=memos[id]||[]).push({ts:new Date().toLocaleString('es'),data:rd.result}); persist(); renderMemos(id); };
+      rd.readAsDataURL(b); stream.getTracks().forEach(t=>t.stop());
+      delete recorders[id]; btn.classList.remove('recording'); btn.textContent='● Grabar una nota'; };
+    mr.start(); recorders[id]=mr; btn.classList.add('recording'); btn.textContent='■ Detener y guardar';
+  }catch(e){ alert("No se pudo usar el micrófono ("+e.name+"). Usa un servidor local."); }
+}
+
+// ----- exportar plan -----
+function downloadPlan(){
+  let md=`# Plan del paseo — Neve Tzedek y HaTachana (Maryluz)\n\nGenerado: ${new Date().toLocaleString('es')}\n\n## Ruta (${STOPS.length} paradas)\n\n`;
+  STOPS.forEach(s=>{
+    md+=`### ${s.n}. ${s.title}\n- Zona: ${s.area}\n- Coordenadas: ${s.coords[0]}, ${s.coords[1]} (${mapsLink(s)})\n`;
+    if(s.es) md+=`- 🎧 Voz de Maryluz: «${s.es}»\n`;
+    if(s.hist) md+=`- 📖 Historia: ${s.hist}\n- Fuente: ${s.verified?'verificada':'borrador'} — ${s.src||''}\n`;
+    (s.links||[]).forEach(x=>md+=`- 🔗 ${x.l}: ${x.u}\n`);
+    const ms=memos[s.id]||[]; if(ms.length) md+=`- 🎙 Notas grabadas (${ms.length}): ${ms.map(m=>m.ts).join(' | ')}\n`;
+    md+=`\n`;
+  });
+  md+=`## Lugares sugeridos (para una hora o más)\n\n`;
+  SUG.forEach(s=>{ md+=`### ${s.title}\n- Zona: ${s.area}\n- Coordenadas: ${s.coords[0]}, ${s.coords[1]} (${mapsLink(s)})\n- Por qué: ${s.why}\n`;
+    (s.links||[]).forEach(x=>md+=`- 🔗 ${x.l}: ${x.u}\n`); md+=`\n`; });
+  const totalMemos=Object.values(memos).reduce((a,b)=>a+b.length,0);
+  md+=`---\n_Notas de voz totales grabadas: ${totalMemos} (el audio queda en el navegador; expórtalo desde cada lugar si lo necesitas)._\n`;
+  const blob=new Blob([md],{type:'text/markdown'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='plan-paseo-maryluz.md'; a.click();
+}
+
+// ----- mapa -----
+let map, markers={};
+function showTab(t){
+  document.getElementById('view-places').classList.toggle('hidden',t!=='places');
+  document.getElementById('view-map').classList.toggle('hidden',t!=='map');
+  document.getElementById('tab-places').classList.toggle('active',t==='places');
+  document.getElementById('tab-map').classList.toggle('active',t==='map');
+  if(t==='map'){ if(!map)initMap(); setTimeout(()=>map.invalidateSize(),60); }
+}
+function pin(s){ return L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,28],popupAnchor:[0,-26],
+   html:`<div class="leaflet-div-icon-num ${s.sug?'pin-s':'pin-v'}"><span>${s.sug?'★':s.n}</span></div>`}); }
+function initMap(){
+  map=L.map('map');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  const pts=[];
+  [...STOPS,...SUG].forEach(s=>{
+    const t=thumb(s), v=s.video?' 🎙':'';
+    const mk=L.marker(s.coords,{icon:pin(s)}).addTo(map).bindPopup(
+      `<div class="pop"><b>${s.sug?'★ ':s.n+'. '}${s.title}</b>${v}<br><small>${s.area}</small>`+
+      `${t?`<br><img src="${t}" style="width:150px;border-radius:6px;margin-top:5px">`:''}`+
+      `<br><button class="btn pbtn" onclick="openModal('${s.id}')">Abrir</button></div>`);
+    markers[s.id]=mk; if(!s.sug)pts.push(s.coords);
+  });
+  L.polyline(pts,{color:'#b5642f',weight:3,opacity:.55,dashArray:'6 6'}).addTo(map);
+  map.fitBounds([...STOPS,...SUG].map(s=>s.coords),{padding:[45,45]});
+}
+function goToMap(id){ const s=ALL[id]; closeModal(); showTab('map');
+  setTimeout(()=>{ map.setView(s.coords,17); markers[id].openPopup(); },140); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal();document.getElementById('lb').style.display='none';} });
+</script>
+</body>
+</html>
