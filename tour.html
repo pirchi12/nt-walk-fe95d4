@@ -98,11 +98,16 @@
   footer{padding:24px;text-align:center;color:var(--muted);font-size:12px}
   #lb{position:fixed;inset:0;background:rgba(20,15,10,.92);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
   #lb img{max-width:92vw;max-height:90vh;border-radius:10px}
+  #login{position:fixed;inset:0;background:rgba(25,18,10,.6);display:none;align-items:flex-start;justify-content:center;z-index:6000;padding:24px;overflow:auto}
+  .noteinput{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;margin-bottom:8px;background:#fff;color:var(--ink)}
+  .synchint{font-size:12px;color:var(--muted);margin-top:6px}
+  .memo .note{font-size:12px;color:var(--accent2)} .memo .ts{line-height:1.3}
 </style>
 </head>
 <body>
 <header class="hero">
   <div class="topbtn">
+    <button class="btn ghost" id="authbtn" onclick="authClick()">☁️ Conectar</button>
     <button class="btn ghost" onclick="downloadPlan()">⬇ Exportar plan</button>
   </div>
   <div class="kick">Un paseo de Maryluz · 25 de mayo de 2026</div>
@@ -117,7 +122,7 @@
 </div>
 
 <div class="note">
-  <b>Maqueta para comentar.</b> Los datos históricos están verificados con fuentes (botón <b>fuente</b> en cada lugar); los puntos del mapa usan coordenadas reales de OpenStreetMap (algunos, marcados, son aproximados por dirección). 🎙 <b>Para grabar, abre con servidor local:</b> <code>python3 -m http.server 8000</code> → <code>http://localhost:8000/tour.html</code>. Cada grabación se suma al plan: usa <b>⬇ Exportar plan</b>.
+  <b>Maqueta para comentar.</b> Historia verificada con fuentes (botón <b>fuente</b> en cada lugar); puntos del mapa con coordenadas reales de OpenStreetMap (algunos aproximados por dirección). 🎙 Toca <b>☁️ Conectar</b> (arriba a la derecha) e inicia sesión con la contraseña compartida para grabar notas que se <b>sincronizan en los dos teléfonos</b>. Todo se vuelca al plan con <b>⬇ Exportar plan</b>.
 </div>
 
 <div id="view-places" class="wrap">
@@ -137,11 +142,32 @@
 </div>
 <div id="lb" onclick="this.style.display='none'"></div>
 
-<footer>Maqueta v2 · medios desde <code>extracted/</code> · notas de voz guardadas en este navegador · historia con fuentes citadas</footer>
+<div id="login" onclick="if(event.target===this)this.style.display='none'">
+  <div class="sheet" style="max-width:400px">
+    <div class="top"><span class="x" onclick="document.getElementById('login').style.display='none'">×</span>
+      <div class="tag">Sincronización en la nube</div><h2>Entrar</h2>
+      <div class="area">Para guardar tus notas y verlas en los dos teléfonos</div></div>
+    <div class="body">
+      <input id="login-name" class="noteinput" placeholder="Tu nombre (p. ej. Maryluz)">
+      <input id="login-pass" class="noteinput" type="password" placeholder="Contraseña compartida" onkeydown="if(event.key==='Enter')doLogin()">
+      <div id="login-err" style="color:#c44;font-size:13px"></div>
+      <button class="btn primary" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<footer>Maqueta v3 · medios desde <code>extracted/</code> · notas de voz sincronizadas en la nube (al iniciar sesión) · historia con fuentes</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const M="extracted/", AR="extracted/archival/", FR="extracted/frames/";
+// ----- Supabase / nube -----
+const SB_URL="https://bgediywlxbzgwwxrvdjr.supabase.co";
+const SB_KEY="sb_publishable_i8ljz9Cih0dy2tuB_mw0mg_Mk187LiH";
+const LOGIN_EMAIL="maryluz@tour.local";
+const sb=(window.supabase&&SB_URL)?window.supabase.createClient(SB_URL,SB_KEY):null;
+let isAuthed=false, authorName=localStorage.getItem('maryluz_author')||'', cloud={};
 // ===== LUGARES VISITADOS =====
 const STOPS=[
  {id:1,n:1,title:"La Villa — Casa Wieland",area:"Recinto HaTachana",coords:[32.06070,34.76240],verified:true,
@@ -314,7 +340,9 @@ function openModal(id){
 
   const rec=`<div class="blk"><h4>🎙 Tus notas de voz (se suman al plan)</h4>
      <div class="memos" id="memos-${s.id}"></div>
-     <button class="btn rec" id="rec-${s.id}" onclick="toggleRec('${s.id}')">● Grabar una nota</button></div>`;
+     <input id="note-${s.id}" class="noteinput" placeholder="Etiqueta o nota para esta grabación (opcional)">
+     <button class="btn rec" id="rec-${s.id}" onclick="toggleRec('${s.id}')">● Grabar una nota</button>
+     <div class="synchint" id="synchint-${s.id}"></div></div>`;
 
   sc.innerHTML=`<div class="top"><span class="x" onclick="closeModal()">×</span>
       <div class="tag">${s.sug?'Lugar sugerido':'Parada '+s.n}</div>
@@ -331,30 +359,86 @@ function swapBA(){ const i=document.getElementById('baimg'),l=document.getElemen
   else { i.src=i.dataset.antes; l.textContent='Antes'; } }
 function lb(src){ const e=document.getElementById('lb'); e.innerHTML=`<img src="${src}">`; e.style.display='flex'; }
 
-// ----- grabación -----
+// ----- grabación + nube -----
 const recorders={}, STORE='maryluz_memos_v2';
 let memos=JSON.parse(localStorage.getItem(STORE)||'{}');
 function persist(){ try{localStorage.setItem(STORE,JSON.stringify(memos));}catch(e){console.warn(e);} }
-function renderMemos(id){ const box=document.getElementById('memos-'+id); if(!box)return; box.innerHTML='';
+function renderMemos(id){ const box=document.getElementById('memos-'+id); if(!box)return;
+  if(isAuthed){ renderCloud(id); return; }
+  box.innerHTML='';
   (memos[id]||[]).forEach((m,i)=>{ const r=document.createElement('div'); r.className='memo';
-    r.innerHTML=`<span class="ts">${m.ts}</span><audio controls src="${m.data}"></audio><button class="del" onclick="delMemo('${id}',${i})">🗑</button>`;
-    box.appendChild(r); }); }
+    r.innerHTML=`<span class="ts">${m.ts}${m.note?'<br><span class=note>“'+esc(m.note)+'”</span>':''}</span><audio controls src="${m.data}"></audio><button class="del" onclick="delMemo('${id}',${i})">🗑</button>`;
+    box.appendChild(r); });
+  const h=document.getElementById('synchint-'+id); if(h) h.innerHTML='Guardado solo en este teléfono. <a href="#" onclick="authClick();return false">Conéctate ☁️</a> para sincronizar.';
+}
 function delMemo(id,i){ memos[id].splice(i,1); persist(); renderMemos(id); }
+async function renderCloud(id){
+  const box=document.getElementById('memos-'+id); if(!box)return; box.innerHTML='';
+  for(const m of (cloud[id]||[])){
+    let url=''; try{ const {data}=await sb.storage.from('memos').createSignedUrl(m.audio_path,3600); url=(data&&data.signedUrl)||''; }catch(e){}
+    const r=document.createElement('div'); r.className='memo';
+    r.innerHTML=`<span class="ts">${new Date(m.created_at).toLocaleString('es')}${m.author?' · '+esc(m.author):''}${m.note?'<br><span class=note>“'+esc(m.note)+'”</span>':''}</span><audio controls src="${url}"></audio><button class="del" onclick="delCloud('${id}','${m.id}','${m.audio_path}')">🗑</button>`;
+    box.appendChild(r);
+  }
+  const h=document.getElementById('synchint-'+id); if(h) h.textContent='☁️ Sincronizado'+(authorName?(' · '+authorName):'');
+}
 async function toggleRec(id){
   const btn=document.getElementById('rec-'+id);
   if(recorders[id]){ recorders[id].stop(); return; }
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    alert("El micrófono se bloquea en file://. Abre con servidor local:\n  python3 -m http.server 8000\nhttp://localhost:8000/tour.html"); return; }
+    alert("El micrófono no está disponible aquí. Abre el enlace público (https) o usa un servidor local."); return; }
   try{
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
     const mr=new MediaRecorder(stream), chunks=[];
     mr.ondataavailable=e=>chunks.push(e.data);
-    mr.onstop=()=>{ const b=new Blob(chunks,{type:'audio/webm'}), rd=new FileReader();
-      rd.onloadend=()=>{ (memos[id]=memos[id]||[]).push({ts:new Date().toLocaleString('es'),data:rd.result}); persist(); renderMemos(id); };
-      rd.readAsDataURL(b); stream.getTracks().forEach(t=>t.stop());
-      delete recorders[id]; btn.classList.remove('recording'); btn.textContent='● Grabar una nota'; };
+    mr.onstop=async()=>{ const b=new Blob(chunks,{type:'audio/webm'});
+      const noteEl=document.getElementById('note-'+id), note=noteEl?noteEl.value.trim():'';
+      stream.getTracks().forEach(t=>t.stop());
+      delete recorders[id]; btn.classList.remove('recording'); btn.textContent='● Grabar una nota';
+      if(isAuthed){ btn.textContent='subiendo…'; await uploadCloud(id,b,note); btn.textContent='● Grabar una nota'; }
+      else { const rd=new FileReader(); rd.onloadend=()=>{ (memos[id]=memos[id]||[]).push({ts:new Date().toLocaleString('es'),note:note,data:rd.result}); persist(); renderMemos(id); }; rd.readAsDataURL(b); }
+      if(noteEl) noteEl.value='';
+    };
     mr.start(); recorders[id]=mr; btn.classList.add('recording'); btn.textContent='■ Detener y guardar';
-  }catch(e){ alert("No se pudo usar el micrófono ("+e.name+"). Usa un servidor local."); }
+  }catch(e){ alert("No se pudo usar el micrófono ("+e.name+")."); }
+}
+// ----- auth + nube (Supabase) -----
+function authClick(){
+  if(!sb){ alert('Sincronización no disponible.'); return; }
+  if(isAuthed){ if(confirm('¿Cerrar sesión de la nube?')){ sb.auth.signOut().then(()=>{ isAuthed=false; cloud={}; updateAuthUI(); document.querySelectorAll('[id^="memos-"]').forEach(b=>renderMemos(b.id.slice(6))); }); } return; }
+  const nm=document.getElementById('login-name'); if(nm) nm.value=authorName||'';
+  document.getElementById('login-err').textContent=''; document.getElementById('login').style.display='flex';
+}
+async function doLogin(){
+  const pass=document.getElementById('login-pass').value, name=document.getElementById('login-name').value.trim();
+  const err=document.getElementById('login-err'); err.textContent='Entrando…';
+  const {error}=await sb.auth.signInWithPassword({email:LOGIN_EMAIL,password:pass});
+  if(error){ err.textContent='No se pudo entrar: '+error.message; return; }
+  authorName=name||'—'; localStorage.setItem('maryluz_author',authorName);
+  isAuthed=true; document.getElementById('login').style.display='none'; updateAuthUI(); await loadCloud();
+}
+function updateAuthUI(){ const b=document.getElementById('authbtn'); if(b) b.textContent= isAuthed?('☁️ '+(authorName||'Conectado')):'☁️ Conectar'; }
+async function loadCloud(){
+  if(!sb||!isAuthed) return;
+  const {data,error}=await sb.from('memos').select('*').order('created_at',{ascending:true});
+  if(error){ console.warn(error); return; }
+  cloud={}; (data||[]).forEach(m=>{ (cloud[m.stop_id]=cloud[m.stop_id]||[]).push(m); });
+  document.querySelectorAll('[id^="memos-"]').forEach(b=>renderMemos(b.id.slice(6)));
+  if(!window._sub){ window._sub=sb.channel('memos-rt').on('postgres_changes',{event:'*',schema:'public',table:'memos'},()=>loadCloud()).subscribe(); }
+}
+async function uploadCloud(id,blob,note){
+  const stop=ALL[id], path=`${id}/${Date.now()}.webm`;
+  const {error:up}=await sb.storage.from('memos').upload(path,blob,{contentType:'audio/webm'});
+  if(up){ alert('Error al subir el audio: '+up.message); return; }
+  const {error:ins}=await sb.from('memos').insert({stop_id:id,stop_title:stop?stop.title:'',author:authorName,note:note||null,audio_path:path});
+  if(ins){ alert('Error al guardar la nota: '+ins.message); return; }
+  await loadCloud();
+}
+async function delCloud(id,memoId,path){
+  if(!confirm('¿Borrar esta nota?')) return;
+  await sb.from('memos').delete().eq('id',memoId);
+  if(path){ try{ await sb.storage.from('memos').remove([path]); }catch(e){} }
+  await loadCloud();
 }
 
 // ----- exportar plan -----
@@ -365,13 +449,14 @@ function downloadPlan(){
     if(s.es) md+=`- 🎧 Voz de Maryluz: «${s.es}»\n`;
     if(s.hist) md+=`- 📖 Historia: ${s.hist}\n- Fuente: ${s.verified?'verificada':'borrador'} — ${s.src||''}\n`;
     (s.links||[]).forEach(x=>md+=`- 🔗 ${x.l}: ${x.u}\n`);
-    const ms=memos[s.id]||[]; if(ms.length) md+=`- 🎙 Notas grabadas (${ms.length}): ${ms.map(m=>m.ts).join(' | ')}\n`;
+    const ms = isAuthed ? (cloud[s.id]||[]).map(m=>`${new Date(m.created_at).toLocaleString('es')}${m.author?' ('+m.author+')':''}${m.note?': “'+m.note+'”':''}`) : (memos[s.id]||[]).map(m=>m.ts+(m.note?': “'+m.note+'”':''));
+    if(ms.length) md+=`- 🎙 Notas grabadas (${ms.length}): ${ms.join(' | ')}\n`;
     md+=`\n`;
   });
   md+=`## Lugares sugeridos (para una hora o más)\n\n`;
   SUG.forEach(s=>{ md+=`### ${s.title}\n- Zona: ${s.area}\n- Coordenadas: ${s.coords[0]}, ${s.coords[1]} (${mapsLink(s)})\n- Por qué: ${s.why}\n`;
     (s.links||[]).forEach(x=>md+=`- 🔗 ${x.l}: ${x.u}\n`); md+=`\n`; });
-  const totalMemos=Object.values(memos).reduce((a,b)=>a+b.length,0);
+  const totalMemos = isAuthed ? Object.values(cloud).reduce((a,b)=>a+b.length,0) : Object.values(memos).reduce((a,b)=>a+b.length,0);
   md+=`---\n_Notas de voz totales grabadas: ${totalMemos} (el audio queda en el navegador; expórtalo desde cada lugar si lo necesitas)._\n`;
   const blob=new Blob([md],{type:'text/markdown'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='plan-paseo-maryluz.md'; a.click();
@@ -405,7 +490,9 @@ function initMap(){
 }
 function goToMap(id){ const s=ALL[id]; closeModal(); showTab('map');
   setTimeout(()=>{ map.setView(s.coords,17); markers[id].openPopup(); },140); }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal();document.getElementById('lb').style.display='none';} });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal();document.getElementById('lb').style.display='none';const lg=document.getElementById('login');if(lg)lg.style.display='none';} });
+updateAuthUI();
+(async()=>{ if(sb){ try{ const {data}=await sb.auth.getSession(); if(data&&data.session){ isAuthed=true; updateAuthUI(); await loadCloud(); } }catch(e){console.warn(e);} } })();
 </script>
 </body>
 </html>
